@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✨ Maureen's budget</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf9f6;--bg2:#f0ede6;--bg3:#e6e0d6;
+  --card:#ffffff;
+  --text:#2d2a25;--text2:#7a7166;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.16);
+  --green:#4a8c6f;--green-dark:#356651;--green-light:#e8f2ec;
+  --green2:#7ab594;--green3:#c5ddd0;
+  --red:#b85c4a;--amber:#c49a3c;
+  --radius:16px;--radius-lg:20px;--radius-xl:24px;
+  --shadow:0 2px 12px rgba(74,140,111,0.08);
+  --shadow-hover:0 4px 20px rgba(74,140,111,0.15);
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1e2420;--bg2:#252e29;--bg3:#2c3830;--card:#1e2420;--text:#e8ede9;--text2:#8a9e91;--border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.18);--green-light:#2a3d32;}
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg3);background-image:radial-gradient(circle at 20% 20%, rgba(122,181,148,0.12) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(74,140,111,0.08) 0%, transparent 50%);color:var(--text);min-height:100vh;}
+.container{max-width:780px;margin:0 auto;padding:2rem 1rem;}
+h1{font-family:'DM Serif Display',serif;font-size:24px;font-weight:400;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px;color:var(--green-dark);}
+h1::before{content:'🌿';font-size:20px;}
+.tabs{display:flex;gap:6px;margin-bottom:1.5rem;flex-wrap:wrap;background:var(--bg2);padding:5px;border-radius:var(--radius-xl);width:fit-content;}
+.tab{padding:7px 16px;border-radius:14px;border:none;background:transparent;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text2);transition:all 0.2s;display:inline-flex;align-items:center;gap:5px;font-weight:500;}
+.tab.active{background:var(--card);color:var(--green-dark);box-shadow:var(--shadow);font-weight:600;}
+.tab:hover:not(.active){background:rgba(255,255,255,0.5);color:var(--text);}
+.section{display:none;}.section.active{display:block;}
+.card{background:var(--card);border-radius:var(--radius-lg);border:1px solid var(--border);padding:1.5rem;margin-bottom:1rem;box-shadow:var(--shadow);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.form-row.full{grid-template-columns:1fr;}.form-row.three{grid-template-columns:1fr 1fr 1fr;}
+label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;letter-spacing:0.03em;text-transform:uppercase;}
+input,select{width:100%;padding:10px 14px;border:1.5px solid var(--border2);border-radius:12px;font-size:14px;background:var(--bg2);color:var(--text);font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+input:focus,select:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(74,140,111,0.15);background:var(--card);}
+.btn{padding:9px 18px;border-radius:12px;border:1.5px solid var(--border2);background:var(--bg2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{background:var(--bg3);transform:translateY(-1px);box-shadow:var(--shadow);}
+.btn.primary{background:linear-gradient(135deg,var(--green),var(--green-dark));border-color:var(--green-dark);color:#fff;width:100%;justify-content:center;font-size:14px;padding:11px 18px;border-radius:14px;box-shadow:0 4px 14px rgba(74,140,111,0.3);}
+.btn.primary:hover{background:linear-gradient(135deg,var(--green-dark),#2a5040);transform:translateY(-1px);box-shadow:0 6px 18px rgba(74,140,111,0.4);}
+.btn.danger{border-color:var(--red);color:var(--red);background:transparent;font-size:13px;}
+.btn.danger:hover{background:#fdf0ee;transform:translateY(-1px);}
+.btn.sm{padding:5px 11px;font-size:12px;border-radius:10px;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem;}
+.metric{background:var(--card);border-radius:var(--radius-lg);padding:1.25rem;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;}
+.metric::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:var(--green-light);opacity:0.5;}
+.metric-label{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em;}
+.metric-value{font-size:22px;font-weight:600;position:relative;z-index:1;}
+.tx-item{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);}
+.tx-item:last-child{border-bottom:none;}
+.tx-desc{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tx-meta{font-size:12px;color:var(--text2);margin-top:2px;}
+.tx-tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500;}
+.tx-amount{font-size:15px;font-weight:600;white-space:nowrap;}
+.tx-del{font-size:16px;cursor:pointer;padding:4px 7px;border-radius:8px;border:none;background:none;color:var(--text2);transition:all 0.15s;}
+.tx-del:hover{color:var(--red);background:var(--bg2);}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.cat-card{background:var(--card);border-radius:var(--radius);padding:14px 16px;border:1px solid var(--border);box-shadow:var(--shadow);transition:all 0.2s;}
+.cat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);}
+.cat-name{font-size:13px;font-weight:600;margin-bottom:6px;}
+.cat-bar-bg{background:var(--bg2);border-radius:99px;height:7px;margin-bottom:6px;overflow:hidden;}
+.cat-bar{height:7px;border-radius:99px;transition:width 0.5s cubic-bezier(0.34,1.56,0.64,1);}
+.cat-amount{font-size:13px;color:var(--text2);}
+.empty{text-align:center;padding:2.5rem 0;color:var(--text2);font-size:14px;}
+.empty::before{content:'🌱';display:block;font-size:2rem;margin-bottom:8px;}
+.save-indicator{font-size:12px;color:var(--text2);text-align:right;min-height:18px;margin-bottom:6px;}
+.save-indicator.ok{color:var(--green);}
+.section-label{font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--green-dark);text-transform:uppercase;margin-bottom:12px;margin-top:1.5rem;display:flex;align-items:center;gap:6px;}
+.section-label::before{content:'';width:3px;height:14px;background:var(--green);border-radius:2px;display:inline-block;}
+.filter-row{display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap;}
+.filter-row select{flex:1;min-width:160px;}
+.period-note{font-size:12px;color:var(--text2);margin-bottom:1rem;}
+.danger-zone{margin-top:2rem;padding-top:1rem;border-top:1px dashed var(--border2);}
+.account-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;margin-bottom:12px;box-shadow:var(--shadow);transition:all 0.2s;}
+.account-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);}
+.account-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.account-name{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.account-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;}
+.account-balance{font-size:24px;font-weight:600;margin-bottom:4px;}
+.account-change{font-size:13px;}
+.account-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.wealth-total{background:linear-gradient(135deg,var(--green-dark),var(--green));border-radius:var(--radius-xl);padding:1.5rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:0 8px 24px rgba(74,140,111,0.25);}
+.wealth-label{font-size:13px;color:rgba(255,255,255,0.8);font-weight:500;}
+.wealth-value{font-size:32px;font-weight:700;color:#fff;}
+.wealth-change{font-size:13px;margin-top:2px;color:rgba(255,255,255,0.85);}
+.wealth-total .btn{background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3);color:#fff;}
+.wealth-total .btn:hover{background:rgba(255,255,255,0.3);}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(45,42,37,0.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:100;}
+.modal{background:var(--card);border-radius:var(--radius-xl);padding:1.75rem;width:100%;max-width:420px;margin:1rem;box-shadow:0 20px 60px rgba(0,0,0,0.15);}
+.modal h3{font-family:'DM Serif Display',serif;font-size:20px;font-weight:400;margin-bottom:1.25rem;color:var(--green-dark);}
+.modal-btns{display:flex;gap:8px;margin-top:1rem;}
+.modal-btns .btn{flex:1;justify-content:center;}
+.budget-bar-bg{background:var(--bg2);border-radius:99px;height:9px;margin:7px 0 5px;overflow:hidden;}
+.budget-bar{height:9px;border-radius:99px;transition:width 0.5s cubic-bezier(0.34,1.56,0.64,1);}
+.budget-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;}
+.budget-label{font-size:13px;font-weight:600;}
+.budget-amounts{font-size:12px;color:var(--text2);}
+.budget-pct{font-size:11px;font-weight:600;}
+.budget-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow);transition:all 0.2s;}
+.budget-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-hover);}
+.budget-card.warn{border-color:var(--amber);border-width:1.5px;}
+.budget-card.over{border-color:var(--red);border-width:1.5px;}
+.no-budget{font-size:12px;color:var(--text2);font-style:italic;}
+.debt-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:12px;box-shadow:var(--shadow);}
+.debt-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;}
+.debt-name{font-size:15px;font-weight:600;}
+.debt-amount{font-size:22px;font-weight:600;color:var(--red);}
+.debt-meta{font-size:12px;color:var(--text2);margin-top:4px;}
+.debt-bar-bg{background:var(--border);border-radius:4px;height:6px;margin:8px 0 4px;overflow:hidden;}
+.debt-bar{height:6px;border-radius:4px;background:var(--red);transition:width 0.4s;}
+.debts-total{background:linear-gradient(135deg,#8c4a4a,#b85c4a);border-radius:var(--radius-xl);padding:1.5rem;margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:0 8px 24px rgba(184,92,74,0.25);}.debts-total .wealth-label{color:rgba(255,255,255,0.8)}.debts-total .wealth-value{color:#fff;font-size:32px;font-weight:700}.debts-total .wealth-change{color:rgba(255,255,255,0.85)}.debts-total .btn{background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3);color:#fff}.debts-total .btn:hover{background:rgba(255,255,255,0.3)}
+.dash-hero{background:linear-gradient(135deg,var(--green-dark),var(--green));border-radius:var(--radius-xl);padding:1.5rem;margin-bottom:1rem;color:#fff;box-shadow:0 8px 24px rgba(74,140,111,0.25);}
+.dash-hero-label{font-size:12px;opacity:0.8;font-weight:500;margin-bottom:4px;}
+.dash-hero-value{font-size:36px;font-weight:700;margin-bottom:2px;}
+.dash-hero-sub{font-size:13px;opacity:0.85;}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+.dash-card{background:var(--card);border-radius:var(--radius-lg);padding:1rem 1.25rem;border:1px solid var(--border);box-shadow:var(--shadow);}
+.dash-card-label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
+.dash-card-value{font-size:20px;font-weight:700;margin-bottom:2px;}
+.dash-card-sub{font-size:12px;color:var(--text2);}
+.dash-budget-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.dash-budget-item:last-child{border-bottom:none;}
+.dash-budget-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dash-budget-name{font-size:13px;font-weight:500;flex:1;}
+.dash-budget-bar-wrap{width:80px;background:var(--bg2);border-radius:99px;height:6px;overflow:hidden;}
+.dash-budget-bar{height:6px;border-radius:99px;transition:width 0.5s;}
+.dash-budget-pct{font-size:12px;font-weight:600;min-width:36px;text-align:right;}
+.dash-pots-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dash-pot{background:var(--bg2);border-radius:14px;padding:10px 12px;}
+.dash-pot-name{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;}
+.dash-pot-value{font-size:16px;font-weight:700;}
+.dash-quick-btn{background:linear-gradient(135deg,var(--green),var(--green-dark));border:none;border-radius:14px;color:#fff;font-family:"DM Sans",sans-serif;font-size:14px;font-weight:600;padding:13px 18px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(74,140,111,0.3);transition:all 0.2s;margin-bottom:1rem;}
+.dash-quick-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(74,140,111,0.4);}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+.compare-card{background:var(--card);border-radius:var(--radius-lg);border:1px solid var(--border);padding:1.25rem;box-shadow:var(--shadow);}
+.compare-card-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.compare-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.compare-row:last-child{border-bottom:none;}
+.compare-row-label{display:flex;align-items:center;gap:7px;color:var(--text);}
+.compare-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.compare-val{font-weight:600;}
+.compare-diff{font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.compare-diff.better{background:#e8f2ec;color:var(--green-dark);}
+.compare-diff.worse{background:#fdf0ee;color:var(--red);}
+.compare-diff.neutral{background:var(--bg2);color:var(--text2);}
+.compare-hero{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;}
+.compare-hero-card{border-radius:var(--radius-lg);padding:1.25rem;color:#fff;box-shadow:var(--shadow);}
+.compare-hero-card.a{background:linear-gradient(135deg,var(--green),var(--green-dark));}
+.compare-hero-card.b{background:linear-gradient(135deg,#7a7166,#5a5550);}
+.insight-card{background:var(--card);border-radius:var(--radius-lg);border:1px solid var(--border);padding:1.25rem 1.5rem;margin-bottom:10px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:flex-start;}
+.insight-icon{font-size:24px;flex-shrink:0;margin-top:2px;}
+.insight-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+.insight-body{font-size:13px;color:var(--text2);line-height:1.5;}
+.insight-card.positive{border-left:3px solid var(--green);}
+.insight-card.warning{border-left:3px solid var(--amber);}
+.insight-card.negative{border-left:3px solid var(--red);}
+.insight-card.neutral{border-left:3px solid var(--green3);}
+.compare-hero-label{font-size:11px;opacity:0.85;font-weight:500;margin-bottom:4px;}
+.compare-hero-value{font-size:22px;font-weight:700;margin-bottom:2px;}
+.compare-hero-sub{font-size:12px;opacity:0.8;}
+
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;background:var(--bg3);background-image:radial-gradient(circle at 20% 20%,rgba(122,181,148,0.12) 0%,transparent 50%);}
+.auth-card{background:var(--card);border-radius:var(--radius-xl);border:1px solid var(--border);padding:2.5rem;width:100%;max-width:400px;box-shadow:0 8px 32px rgba(74,140,111,0.12);}
+.auth-title{font-family:"DM Serif Display",serif;font-size:28px;font-weight:400;color:var(--green-dark);margin-bottom:6px;}
+.auth-sub{font-size:14px;color:var(--text2);margin-bottom:2rem;}
+.auth-tabs{display:flex;gap:4px;background:var(--bg2);padding:4px;border-radius:12px;margin-bottom:1.5rem;}
+.auth-tab{flex:1;padding:7px;border-radius:9px;border:none;background:transparent;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;transition:all 0.2s;}
+.auth-tab.active{background:var(--card);color:var(--green-dark);box-shadow:var(--shadow);}
+.auth-msg{border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:1rem;display:none;}
+.auth-msg.show{display:block;}
+.auth-msg.error{background:#fdf0ee;color:var(--red);}
+.auth-msg.success{background:#e8f2ec;color:var(--green-dark);}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+@media(max-width:520px){
+  .summary-grid{grid-template-columns:1fr 1fr;}
+  .summary-grid .metric:last-child{grid-column:span 2;}
+  .form-row{grid-template-columns:1fr;}
+  .form-row.three{grid-template-columns:1fr 1fr;}
+  .cat-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="auth-wrap" id="auth-screen" style="display:none">
+  <div class="auth-card">
+    <div class="auth-title">🌿 Maureen's budget</div>
+    <div class="auth-sub">Log in om je budget te bekijken</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="showAuthTab('login')">Inloggen</button>
+      <button class="auth-tab" onclick="showAuthTab('signup')">Registreren</button>
+    </div>
+    <div class="auth-msg" id="auth-msg"></div>
+    <div id="auth-login">
+      <div class="form-row full" style="margin-bottom:12px"><div><label>E-mail</label><input type="email" id="login-email" placeholder="jouw@email.nl"></div></div>
+      <div class="form-row full" style="margin-bottom:16px"><div><label>Wachtwoord</label><input type="password" id="login-password" placeholder="••••••••"></div></div>
+      <button class="btn primary" onclick="doLogin()">Inloggen</button>
+    </div>
+    <div id="auth-signup" style="display:none">
+      <div class="form-row full" style="margin-bottom:12px"><div><label>E-mail</label><input type="email" id="signup-email" placeholder="jouw@email.nl"></div></div>
+      <div class="form-row full" style="margin-bottom:16px"><div><label>Wachtwoord</label><input type="password" id="signup-password" placeholder="Minimaal 6 tekens"></div></div>
+      <button class="btn primary" onclick="doSignup()">Account aanmaken</button>
+    </div>
+  </div>
+</div>
+
+<div id="app-screen" style="display:none"><div class="container">
+  <div class="topbar"><h1>Maureen's budget</h1><button class="btn" style="background:transparent;border-color:transparent;color:var(--text2)" onclick="doLogout()"><i class="ti ti-logout"></i> Uitloggen</button></div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('dashboard')"><i class="ti ti-home"></i> Dashboard</button>
+    <button class="tab" onclick="switchTab('add')"><i class="ti ti-plus"></i> Toevoegen</button>
+    <button class="tab" onclick="switchTab('overview')"><i class="ti ti-chart-bar"></i> Overzicht</button>
+    <button class="tab" onclick="switchTab('cats')"><i class="ti ti-layout-grid"></i> Categorieën</button>
+    <button class="tab" onclick="switchTab('budgets')"><i class="ti ti-target"></i> Budgetten</button>
+    <button class="tab" onclick="switchTab('wealth')"><i class="ti ti-plant"></i> Vermogen</button>
+    <button class="tab" onclick="switchTab('debts')"><i class="ti ti-credit-card"></i> Schulden</button>
+    <button class="tab" onclick="switchTab('compare')"><i class="ti ti-arrows-diff"></i> Vergelijken</button>
+    <button class="tab" onclick="switchTab('insights')"><i class="ti ti-sparkles"></i> Inzichten</button>
+    <button class="tab" onclick="switchTab('settings')"><i class="ti ti-settings"></i> Instellingen</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="tab-dashboard" class="section active">
+    <div class="dash-hero">
+      <div class="dash-hero-label">Netto vermogen</div>
+      <div class="dash-hero-value" id="dash-netto">€ 0</div>
+      <div class="dash-hero-sub" id="dash-netto-sub"></div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-card">
+        <div class="dash-card-label">💰 Saldo periode</div>
+        <div class="dash-card-value" id="dash-saldo">€ 0</div>
+        <div class="dash-card-sub" id="dash-saldo-sub"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">📉 Totale schuld</div>
+        <div class="dash-card-value" id="dash-schuld" style="color:var(--red)">€ 0</div>
+        <div class="dash-card-sub" id="dash-schuld-sub"></div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">📈 Inkomsten</div>
+        <div class="dash-card-value" id="dash-income" style="color:var(--green)">€ 0</div>
+        <div class="dash-card-sub">deze periode</div>
+      </div>
+      <div class="dash-card">
+        <div class="dash-card-label">🛍️ Uitgaven</div>
+        <div class="dash-card-value" id="dash-expense" style="color:var(--red)">€ 0</div>
+        <div class="dash-card-sub">deze periode</div>
+      </div>
+    </div>
+
+    <button class="dash-quick-btn" onclick="switchTab('add')"><i class="ti ti-plus"></i> Transactie toevoegen</button>
+
+    <div class="card">
+      <div class="section-label" style="margin-top:0">Budget voortgang</div>
+      <div id="dash-budgets"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label" style="margin-top:0">Spaarpotjes & vermogen</div>
+      <div class="dash-pots-grid" id="dash-pots"></div>
+    </div>
+  </div>
+
+  <!-- TOEVOEGEN -->
+  <div id="tab-add" class="section">
+    <div class="card">
+      <div class="save-indicator" id="save-ind"></div>
+      <div class="form-row">
+        <div><label>Type</label>
+          <select id="type" onchange="toggleCats()">
+            <option value="expense">Uitgave</option>
+            <option value="income">Inkomst</option>
+          </select>
+        </div>
+        <div><label>Categorie</label><select id="category"></select></div>
+      </div>
+      <div class="form-row">
+        <div><label>Bedrag (€)</label><input type="number" id="amount" placeholder="0,00" min="0" step="0.01"></div>
+        <div><label>Datum</label><input type="date" id="date"></div>
+      </div>
+      <div class="form-row">
+        <div><label>Omschrijving</label><input type="text" id="desc" placeholder="Bijv. salaris maart, Netflix..."></div>
+        <div><label>Winkel / Locatie <span style="font-weight:400;text-transform:none;font-size:11px">(optioneel)</span></label><input type="text" id="location" placeholder="Bijv. Albert Heijn, Shell A2..."></div>
+      </div>
+      <div class="form-row full">
+        <button class="btn primary" onclick="addTransaction()"><i class="ti ti-plus"></i> Toevoegen</button>
+      </div>
+    </div>
+    <div id="recent-list"></div>
+  </div>
+
+  <!-- OVERZICHT -->
+  <div id="tab-overview" class="section">
+    <div class="filter-row">
+      <select id="filter-period" onchange="renderOverview()"></select>
+    </div>
+    <div class="period-note" id="period-note"></div>
+    <div class="summary-grid">
+      <div class="metric"><div class="metric-label">Inkomsten</div><div class="metric-value" id="ov-income" style="color:var(--green)">€ 0</div></div>
+      <div class="metric"><div class="metric-label">Uitgaven</div><div class="metric-value" id="ov-expense" style="color:var(--red)">€ 0</div></div>
+      <div class="metric"><div class="metric-label">Saldo</div><div class="metric-value" id="ov-balance">€ 0</div></div>
+    </div>
+    <div style="position:relative;width:100%;height:220px;margin-bottom:1.5rem">
+      <canvas id="ov-chart"></canvas>
+    </div>
+    <div id="ov-list"></div>
+  </div>
+
+  <!-- CATEGORIEËN -->
+  <div id="tab-cats" class="section">
+    <div class="btn-row">
+      <button class="btn" onclick="exportCSV()"><i class="ti ti-download"></i> Exporteer CSV</button>
+      <label class="btn" style="cursor:pointer"><i class="ti ti-upload"></i> Importeer CSV<input type="file" accept=".csv" onchange="importCSV(event)" style="display:none"></label>
+    </div>
+    <div class="section-label">Uitgavencategorieën deze periode</div>
+    <div class="cat-grid" id="exp-cats-grid"></div>
+    <div class="danger-zone">
+      <button class="btn danger" onclick="clearAllData()"><i class="ti ti-trash"></i> Alle data wissen</button>
+    </div>
+  </div>
+
+  <!-- BUDGETTEN -->
+  <div id="tab-budgets" class="section">
+    <div class="card">
+      <p style="font-size:14px;color:var(--text2);margin-bottom:1rem">Stel per uitgavencategorie een budget in. Het overzicht toont de voortgang van de geselecteerde periode.</p>
+      <div id="budget-form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem"></div>
+      <button class="btn primary" onclick="saveBudgets()"><i class="ti ti-check"></i> Budgetten opslaan</button>
+    </div>
+    <div class="section-label" style="margin-top:1.5rem">Voortgang huidige periode</div>
+    <div id="budget-progress"></div>
+  </div>
+
+  <!-- VERMOGEN -->
+  <div id="tab-wealth" class="section">
+    <div class="wealth-total">
+      <div>
+        <div class="wealth-label">Totaal vermogen</div>
+        <div class="wealth-value" id="wealth-total">€ 0</div>
+        <div class="wealth-change" id="wealth-change"></div>
+      </div>
+      <button class="btn" onclick="openAddAccount()"><i class="ti ti-plus"></i> Rekening toevoegen</button>
+    </div>
+    <div id="accounts-list"></div>
+    <div style="position:relative;width:100%;height:280px;margin-top:1.5rem;display:none" id="wealth-chart-wrap">
+      <canvas id="wealth-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- SCHULDEN -->
+  <div id="tab-debts" class="section">
+    <div class="debts-total">
+      <div>
+        <div class="wealth-label">Totale schuld</div>
+        <div class="wealth-value" id="debts-total" style="color:var(--red)">€ 0</div>
+        <div class="wealth-change" id="debts-change"></div>
+      </div>
+      <button class="btn" onclick="openAddDebt()"><i class="ti ti-plus"></i> Schuld toevoegen</button>
+    </div>
+    <div id="debts-list"></div>
+    <div style="position:relative;width:100%;height:260px;margin-top:1.5rem;display:none" id="debt-chart-wrap">
+      <canvas id="debt-chart"></canvas>
+    </div>
+  </div>
+
+  <!-- VERGELIJKEN -->
+  <div id="tab-compare" class="section">
+    <div class="card" style="margin-bottom:1rem">
+      <p style="font-size:14px;color:var(--text2);margin-bottom:1rem">Vergelijk twee salarisperiodes met elkaar.</p>
+      <div class="form-row">
+        <div><label>Periode A</label><select id="compare-period-a" onchange="renderCompare()"></select></div>
+        <div><label>Periode B</label><select id="compare-period-b" onchange="renderCompare()"></select></div>
+      </div>
+    </div>
+    <div id="compare-content"></div>
+  </div>
+
+  <!-- INZICHTEN -->
+  <div id="tab-insights" class="section">
+    <div style="margin-bottom:1rem">
+      <p style="font-size:14px;color:var(--text2)">Automatische observaties op basis van je transacties en budgetten.</p>
+    </div>
+    <div id="insights-content"></div>
+  </div>
+
+  <!-- INSTELLINGEN -->
+  <div id="tab-settings" class="section">
+    <div class="card">
+      <div class="section-label" style="margin-top:0">Salarisperiode</div>
+      <p style="font-size:14px;color:var(--text2);margin-bottom:1rem">Standaard salarisdag. Je kunt per periode een afwijkende dag instellen als je salaris eerder of later binnenkwam.</p>
+      <div class="form-row" style="max-width:300px">
+        <div><label>Standaard salarisdag</label><select id="salary-day" onchange="saveSalaryDay()"></select></div>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-top:8px" id="period-preview"></p>
+    </div>
+    <div class="card">
+      <div class="section-label" style="margin-top:0">Afwijkende salarisdagen</div>
+      <p style="font-size:14px;color:var(--text2);margin-bottom:1rem">Hier stel je per maand in op welke dag je salaris daadwerkelijk ontvangen hebt, bijv. door feestdagen.</p>
+      <div id="salary-overrides-list" style="margin-bottom:1rem"></div>
+      <div class="form-row three" style="align-items:end">
+        <div><label>Jaar</label><select id="override-year"></select></div>
+        <div><label>Maand</label><select id="override-month">
+          <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maart</option>
+          <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+          <option value="7">Juli</option><option value="8">Augustus</option><option value="9">September</option>
+          <option value="10">Oktober</option><option value="11">November</option><option value="12">December</option>
+        </select></div>
+        <div><label>Ontvangen op dag</label><select id="override-day"></select></div>
+      </div>
+      <button class="btn" onclick="addSalaryOverride()" style="margin-top:4px"><i class="ti ti-plus"></i> Toevoegen</button>
+    </div>
+    <div class="card">
+      <div class="section-label" style="margin-top:0">Data</div>
+      <div class="btn-row">
+        <button class="btn" onclick="exportCSV()"><i class="ti ti-download"></i> Exporteer CSV</button>
+        <label class="btn" style="cursor:pointer"><i class="ti ti-upload"></i> Importeer CSV<input type="file" accept=".csv" onchange="importCSV(event)" style="display:none"></label>
+      </div>
+      <div style="margin-top:1rem"><button class="btn danger" onclick="clearAllData()"><i class="ti ti-trash"></i> Alle data wissen</button></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div id="modal-account" class="modal-overlay" style="display:none" onclick="closeModalIfOverlay(event)">
+  <div class="modal">
+    <h3 id="modal-account-title">Rekening toevoegen</h3>
+    <div class="form-row full"><div><label>Naam</label><input type="text" id="acc-name" placeholder="Bijv. ING spaarrekening"></div></div>
+    <div class="form-row">
+      <div><label>Type</label>
+        <select id="acc-type">
+          <option value="savings">Spaarrekening</option>
+          <option value="pot">Spaarpotje</option>
+          <option value="investments">Beleggingen</option>
+          <option value="crypto">Crypto</option>
+          <option value="cash">Contant geld</option>
+        </select>
+      </div>
+      <div><label>Beginsaldo (€)</label><input type="number" id="acc-balance" placeholder="0,00" step="0.01"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modal-account')">Annuleren</button>
+      <button class="btn primary" onclick="saveAccount()" style="width:auto;flex:1">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-snapshot" class="modal-overlay" style="display:none" onclick="closeModalIfOverlay(event)">
+  <div class="modal">
+    <h3>Saldo bijwerken</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1rem" id="snapshot-account-name"></p>
+    <div class="form-row">
+      <div><label>Nieuw saldo (€)</label><input type="number" id="snap-balance" placeholder="0,00" step="0.01"></div>
+      <div><label>Datum</label><input type="date" id="snap-date"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modal-snapshot')">Annuleren</button>
+      <button class="btn primary" onclick="saveSnapshot()" style="width:auto;flex:1">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-history" class="modal-overlay" style="display:none" onclick="closeModalIfOverlay(event)">
+  <div class="modal" style="max-width:480px">
+    <h3 id="modal-history-title">Saldihistorie</h3>
+    <div id="modal-history-content" style="max-height:320px;overflow-y:auto;margin-bottom:1rem"></div>
+    <button class="btn" onclick="closeModal('modal-history')" style="width:100%;justify-content:center">Sluiten</button>
+  </div>
+</div>
+
+<div id="modal-debt" class="modal-overlay" style="display:none" onclick="closeModalIfOverlay(event)">
+  <div class="modal">
+    <h3 id="modal-debt-title">Schuld toevoegen</h3>
+    <div class="form-row full"><div><label>Naam</label><input type="text" id="debt-name" placeholder="Bijv. Klarna, studieschuld..."></div></div>
+    <div class="form-row">
+      <div><label>Type</label>
+        <select id="debt-type">
+          <option value="klarna">Klarna / BNPL</option>
+          <option value="study">Studieschuld</option>
+          <option value="personal">Persoonlijke lening</option>
+          <option value="other">Overig</option>
+        </select>
+      </div>
+      <div><label>Huidig openstaand (€)</label><input type="number" id="debt-amount" placeholder="0,00" step="0.01"></div>
+    </div>
+    <div class="form-row full"><div><label>Notitie (optioneel)</label><input type="text" id="debt-note" placeholder="Bijv. maandelijks €50 aflossen"></div></div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modal-debt')">Annuleren</button>
+      <button class="btn primary" onclick="saveDebt()" style="width:auto;flex:1">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-debt-update" class="modal-overlay" style="display:none" onclick="closeModalIfOverlay(event)">
+  <div class="modal">
+    <h3>Schuld bijwerken</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1rem" id="debt-update-name"></p>
+    <div class="form-row">
+      <div><label>Nieuw openstaand bedrag (€)</label><input type="number" id="debt-update-amount" placeholder="0,00" step="0.01"></div>
+      <div><label>Datum</label><input type="date" id="debt-update-date"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modal-debt-update')">Annuleren</button>
+      <button class="btn primary" onclick="saveDebtUpdate()" style="width:auto;flex:1">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SURL='https://mlxecjkzmuottpipgyzs.supabase.co';
+const SKEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1seGVjamt6bXVvdHRwaXBneXpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNDk5MTksImV4cCI6MjA5NDkyNTkxOX0.FhgNzSSJcYVp192Ph30ZZPnWHzrANIqW3Z8DhlfwoL8';
+const sb=supabase.createClient(SURL,SKEY,{auth:{persistSession:true,storageKey:'maureen-budget-auth',storage:window.localStorage,autoRefreshToken:true,detectSessionInUrl:true}});
+let currentUser=null;
+
+// AUTH
+function showAuthTab(t){
+  document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('active',i===(t==='login'?0:1)));
+  document.getElementById('auth-login').style.display=t==='login'?'block':'none';
+  document.getElementById('auth-signup').style.display=t==='signup'?'block':'none';
+  const m=document.getElementById('auth-msg');m.className='auth-msg';m.textContent='';
+}
+function showAuthMsg(msg,type='error'){const m=document.getElementById('auth-msg');m.textContent=msg;m.className='auth-msg show '+type;}
+async function doLogin(){
+  const email=document.getElementById('login-email').value;
+  const password=document.getElementById('login-password').value;
+  const{error}=await sb.auth.signInWithPassword({email,password});
+  if(error)showAuthMsg(error.message);
+}
+async function doSignup(){
+  const email=document.getElementById('signup-email').value;
+  const password=document.getElementById('signup-password').value;
+  const{error}=await sb.auth.signUp({email,password});
+  if(error)showAuthMsg(error.message);
+  else showAuthMsg('Check je e-mail voor een bevestigingslink!','success');
+}
+async function doLogout(){await sb.auth.signOut();}
+async function initAuth(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){currentUser=session.user;showApp();}
+  else{document.getElementById('auth-screen').style.display='flex';}
+  sb.auth.onAuthStateChange((_,session)=>{
+    if(session){currentUser=session.user;showApp();}
+    else{currentUser=null;document.getElementById('auth-screen').style.display='flex';document.getElementById('app-screen').style.display='none';}
+  });
+}
+function showApp(){
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  loadAll();
+}
+
+const EXPENSE_CATS=[
+  {id:'boodschappen',label:'Boodschappen',color:'#1D9E75'},
+  {id:'uit-eten',label:'Uit eten',color:'#3266ad'},
+  {id:'vrije-tijd',label:'Vrije tijd',color:'#7F77DD'},
+  {id:'kleding',label:'Kleding',color:'#D4537E'},
+  {id:'abonnementen',label:'Abonnementen',color:'#888780'},
+  {id:'tanken-parken',label:'Tanken & Parken',color:'#BA7517'},
+  {id:'verzekeringen',label:'Verzekeringen',color:'#378ADD'},
+  {id:'sparen',label:'Sparen',color:'#0F6E56'},
+  {id:'anders-uitgave',label:'Anders',color:'#999'},
+];
+const POTS=[];
+const INCOME_CATS=[
+  {id:'salaris',label:'Salaris',color:'#0F6E56'},
+  {id:'freelance',label:'Freelance',color:'#185FA5'},
+  {id:'tikkie',label:'Tikkie',color:'#7F77DD'},
+  {id:'toeslagen',label:'Toeslagen',color:'#BA7517'},
+  {id:'anders-inkomen',label:'Anders',color:'#888'},
+];
+const ACC_TYPES={
+  savings:{label:'Spaarrekening',color:'#1D9E75',icon:'ti-building-bank'},
+  investments:{label:'Beleggingen',color:'#534AB7',icon:'ti-trending-up'},
+  crypto:{label:'Crypto',color:'#BA7517',icon:'ti-currency-bitcoin'},
+  cash:{label:'Contant',color:'#888780',icon:'ti-cash'},
+  pot:{label:'Spaarpotje',color:'#D4537E',icon:'ti-heart'},
+};
+const DEBT_TYPES={
+  klarna:{label:'Klarna / BNPL',color:'#993C1D',icon:'ti-credit-card'},
+  study:{label:'Studieschuld',color:'#534AB7',icon:'ti-school'},
+  personal:{label:'Persoonlijke lening',color:'#BA7517',icon:'ti-user'},
+  other:{label:'Overig',color:'#888780',icon:'ti-receipt'},
+};
+
+// Supabase-based storage - no localStorage keys needed
+
+let transactions=[], accounts=[], debts=[];
+let settings={salaryDay:25, salaryOverrides:{}};
+let budgets={};
+let ovChart=null, wealthChart=null, debtChart=null;
+let editingAccountId=null, snapshotAccountId=null;
+let editingDebtId=null, updatingDebtId=null;
+
+function allCats(){return[...INCOME_CATS,...EXPENSE_CATS,...POTS];}
+function catById(id){return allCats().find(c=>c.id===id)||{label:id,color:'#888'};}
+function fmt(n){return'€ '+Math.abs(n).toLocaleString('nl-NL',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtSigned(n){return(n<0?'- ':n>0?'+ ':'')+fmt(n);}
+function today(){return new Date().toISOString().slice(0,10);}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+async function loadAll(){
+  if(!currentUser)return;
+  const uid=currentUser.id;
+  const[txRes,accRes,debtRes,settRes,budgRes]=await Promise.all([
+    sb.from('transactions').select('*').eq('user_id',uid).order('date',{ascending:false}),
+    sb.from('accounts').select('*').eq('user_id',uid),
+    sb.from('debts').select('*').eq('user_id',uid),
+    sb.from('settings').select('*').eq('user_id',uid).maybeSingle(),
+    sb.from('budgets').select('*').eq('user_id',uid).maybeSingle(),
+  ]);
+  transactions=(txRes.data||[]).map(t=>({...t,desc:t.description}));
+  accounts=(accRes.data||[]).map(a=>({...a,snapshots:a.snapshots||[]}));
+  debts=(debtRes.data||[]).map(d=>({...d,history:d.history||[]}));
+  settings=settRes.data?{salaryDay:25,salaryOverrides:{},...settRes.data.data}:{salaryDay:25,salaryOverrides:{}};
+  budgets=budgRes.data?budgRes.data.data:{boodschappen:175,'tanken-parken':300,'uit-eten':100,'vrije-tijd':150,kleding:75,'anders-uitgave':75,sparen:800};
+  renderRecent();populatePeriodFilter();setupSalaryDaySelect();setupOverrideSelects();renderOverridesList();renderDashboard();
+}
+
+function showInd(msg,ok=true){const i=document.getElementById('save-ind');i.textContent=msg;i.className='save-indicator'+(ok?' ok':'');setTimeout(()=>{i.textContent='';i.className='save-indicator';},2500);}
+async function saveSettings(){if(!currentUser)return;await sb.from('settings').upsert({user_id:currentUser.id,data:settings},{onConflict:'user_id'});}
+
+async function clearAllData(){
+  if(!confirm('Weet je zeker dat je alle data wilt wissen?'))return;
+  await sb.from('transactions').delete().eq('user_id',currentUser.id);
+  transactions=[];renderRecent();renderOverview();renderCats();renderDashboard();
+}
+
+// --- SALARY PERIOD (with per-period overrides) ---
+function getSalaryDayForMonth(year, month){
+  const key=`${year}-${String(month).padStart(2,'0')}`;
+  return settings.salaryOverrides[key]||settings.salaryDay;
+}
+
+function getPeriodStart(refDate){
+  const d=new Date(refDate);
+  const year=d.getFullYear(), month=d.getMonth()+1, dayOfMonth=d.getDate();
+  const dayThisMonth=getSalaryDayForMonth(year,month);
+  if(dayOfMonth>=dayThisMonth){
+    return new Date(year,month-1,dayThisMonth);
+  } else {
+    const pm=month===1?12:month-1, py=month===1?year-1:year;
+    const dayPrevMonth=getSalaryDayForMonth(py,pm);
+    const maxDay=new Date(py,pm,0).getDate();
+    return new Date(py,pm-1,Math.min(dayPrevMonth,maxDay));
+  }
+}
+
+function getPeriodEnd(start){
+  const nextMonth=start.getMonth()+2, nextYear=start.getMonth()===11?start.getFullYear()+1:start.getFullYear();
+  const nm=nextMonth>12?1:nextMonth, ny=nextMonth>12?nextYear:nextYear;
+  const dayNextMonth=getSalaryDayForMonth(ny,nm);
+  const maxDay=new Date(ny,nm,0).getDate();
+  return new Date(ny,nm-1,Math.min(dayNextMonth-1,maxDay));
+}
+
+function dateToStr(d){return d.toISOString().slice(0,10);}
+
+function getPeriodLabel(start){
+  const end=getPeriodEnd(start);
+  const opts={day:'numeric',month:'short'};
+  return start.toLocaleDateString('nl-NL',opts)+' – '+end.toLocaleDateString('nl-NL',{...opts,year:'numeric'});
+}
+
+function getAllPeriods(){
+  if(!transactions.length)return[getPeriodStart(today())];
+  const dates=transactions.map(t=>t.date).sort();
+  const earliest=new Date(dates[0]);
+  const periods=[];
+  let cur=getPeriodStart(today());
+  const limit=getPeriodStart(earliest);
+  while(cur>=limit){
+    periods.push(new Date(cur));
+    const pm=cur.getMonth()===0?11:cur.getMonth()-1;
+    const py=cur.getMonth()===0?cur.getFullYear()-1:cur.getFullYear();
+    const prevMonth=pm+1, prevYear=py;
+    const dayPrev=getSalaryDayForMonth(prevYear,prevMonth);
+    cur=new Date(prevYear,pm,dayPrev);
+  }
+  return periods;
+}
+
+function populatePeriodFilter(){
+  const sel=document.getElementById('filter-period');
+  const current=sel.value;
+  const periods=getAllPeriods();
+  sel.innerHTML=periods.map((p,i)=>{
+    const val=dateToStr(p);
+    return`<option value="${val}"${val===(current||dateToStr(periods[0]))||(!current&&i===0)?' selected':''}>${getPeriodLabel(p)}</option>`;
+  }).join('');
+}
+
+function setupSalaryDaySelect(){
+  const sel=document.getElementById('salary-day');
+  sel.innerHTML='';
+  for(let i=1;i<=28;i++){
+    const o=document.createElement('option');
+    o.value=i;o.textContent=i+'e van de maand';
+    if(i===settings.salaryDay)o.selected=true;
+    sel.appendChild(o);
+  }
+  updatePeriodPreview();
+}
+
+function saveSalaryDay(){
+  settings.salaryDay=parseInt(document.getElementById('salary-day').value);
+  saveAll();populatePeriodFilter();updatePeriodPreview();
+}
+
+function updatePeriodPreview(){
+  const start=getPeriodStart(today());
+  const end=getPeriodEnd(start);
+  const f=d=>d.toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('period-preview').textContent='Huidige periode: '+f(start)+' t/m '+f(end);
+}
+
+function setupOverrideSelects(){
+  const ySel=document.getElementById('override-year');
+  const dSel=document.getElementById('override-day');
+  const curYear=new Date().getFullYear();
+  ySel.innerHTML='';
+  for(let y=curYear-1;y<=curYear+1;y++){
+    const o=document.createElement('option');
+    o.value=y;o.textContent=y;
+    if(y===curYear)o.selected=true;
+    ySel.appendChild(o);
+  }
+  dSel.innerHTML='';
+  for(let i=1;i<=28;i++){
+    const o=document.createElement('option');
+    o.value=i;o.textContent=i+'e';
+    if(i===settings.salaryDay)o.selected=true;
+    dSel.appendChild(o);
+  }
+  const curMonth=new Date().getMonth()+1;
+  document.getElementById('override-month').value=curMonth;
+}
+
+function addSalaryOverride(){
+  const year=document.getElementById('override-year').value;
+  const month=document.getElementById('override-month').value;
+  const day=parseInt(document.getElementById('override-day').value);
+  const key=`${year}-${String(month).padStart(2,'0')}`;
+  if(!settings.salaryOverrides)settings.salaryOverrides={};
+  settings.salaryOverrides[key]=day;
+  saveAll();renderOverridesList();populatePeriodFilter();
+}
+
+function removeOverride(key){
+  delete settings.salaryOverrides[key];
+  saveAll();renderOverridesList();populatePeriodFilter();
+}
+
+function renderOverridesList(){
+  const el=document.getElementById('salary-overrides-list');
+  const overrides=settings.salaryOverrides||{};
+  const keys=Object.keys(overrides).sort().reverse();
+  if(!keys.length){el.innerHTML='<div class="empty" style="padding:0.5rem 0;text-align:left;font-size:13px;color:var(--text2)">Geen afwijkingen ingesteld</div>';return;}
+  const months=['','Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
+  el.innerHTML=keys.map(k=>{
+    const[y,m]=k.split('-');
+    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid var(--border);font-size:13px">
+      <span>${months[parseInt(m)]} ${y}: ontvangen op de ${overrides[k]}e</span>
+      <button class="btn sm danger" onclick="removeOverride('${k}')"><i class="ti ti-x"></i></button>
+    </div>`;
+  }).join('');
+}
+
+// --- TRANSACTIONS ---
+function toggleCats(){
+  const type=document.getElementById('type').value;
+  const sel=document.getElementById('category');
+  sel.innerHTML='';
+  const cats=type==='income'?INCOME_CATS:[...EXPENSE_CATS,...POTS];
+  cats.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.label;sel.appendChild(o);});
+}
+
+function addTransaction(){
+  const type=document.getElementById('type').value;
+  const cat=document.getElementById('category').value;
+  const amount=parseFloat(document.getElementById('amount').value);
+  const date=document.getElementById('date').value;
+  const desc=document.getElementById('desc').value.trim();
+  const location=document.getElementById('location').value.trim();
+  if(!amount||amount<=0||!date){alert('Vul een bedrag en datum in.');return;}
+  transactions.unshift({id:Date.now(),type,cat,amount,date,desc:desc||catById(cat).label,location});
+  document.getElementById('amount').value='';
+  document.getElementById('desc').value='';
+  document.getElementById('location').value='';
+  saveAll();renderRecent();populatePeriodFilter();
+}
+
+function deleteTransaction(id){
+  transactions=transactions.filter(t=>t.id!==id);
+  saveAll();renderRecent();
+  if(document.getElementById('tab-overview').classList.contains('active'))renderOverview();
+  if(document.getElementById('tab-cats').classList.contains('active'))renderCats();
+}
+
+function txHTML(t){
+  const cat=catById(t.cat);
+  const sign=t.type==='income'?'+':'-';
+  const col=t.type==='income'?'var(--green)':'var(--red)';
+  const d=new Date(t.date).toLocaleDateString('nl-NL',{day:'numeric',month:'short'});
+  return`<div class="tx-item">
+    <div style="min-width:0">
+      <div class="tx-desc">${esc(t.desc)}</div>
+      <div class="tx-meta">${d} &middot; <span class="tx-tag" style="background:${cat.color}22;color:${cat.color}">${cat.label}</span>${t.location?` &middot; <span style="color:var(--text2)">📍 ${esc(t.location)}</span>`:''}</div>
+    </div>
+    <div class="tx-amount" style="color:${col}">${sign} ${fmt(t.amount)}</div>
+    <button class="tx-del" onclick="deleteTransaction(${t.id})" aria-label="Verwijder"><i class="ti ti-x"></i></button>
+  </div>`;
+}
+
+function renderRecent(){
+  const el=document.getElementById('recent-list');
+  const recent=transactions.slice(0,10);
+  if(!recent.length){el.innerHTML='<div class="empty">Nog geen transacties toegevoegd</div>';return;}
+  el.innerHTML='<div style="font-size:13px;color:var(--text2);margin-bottom:10px">Recente transacties</div>'+recent.map(txHTML).join('');
+}
+
+function renderOverview(){
+  populatePeriodFilter();
+  const val=document.getElementById('filter-period').value;
+  const start=new Date(val);
+  const end=getPeriodEnd(start);
+  const startStr=dateToStr(start), endStr=dateToStr(end);
+  document.getElementById('period-note').textContent='Periode: '+getPeriodLabel(start);
+  const txs=transactions.filter(t=>t.date>=startStr&&t.date<=endStr);
+  const income=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const balance=income-expense;
+  document.getElementById('ov-income').textContent=fmt(income);
+  document.getElementById('ov-expense').textContent=fmt(expense);
+  const balEl=document.getElementById('ov-balance');
+  balEl.textContent=(balance<0?'- ':'')+fmt(balance);
+  balEl.style.color=balance<0?'var(--red)':balance>0?'var(--green)':'var(--text)';
+  const expByCat={};
+  txs.filter(t=>t.type==='expense').forEach(t=>{expByCat[t.cat]=(expByCat[t.cat]||0)+t.amount;});
+  const sorted=Object.entries(expByCat).sort((a,b)=>b[1]-a[1]);
+  if(ovChart){ovChart.destroy();ovChart=null;}
+  if(sorted.length){
+    ovChart=new Chart(document.getElementById('ov-chart'),{
+      type:'bar',
+      data:{labels:sorted.map(([id])=>catById(id).label),
+        datasets:[{label:'Uitgaven',data:sorted.map(([,v])=>parseFloat(v.toFixed(2))),
+          backgroundColor:sorted.map(([id])=>catById(id).color+'cc'),
+          borderColor:sorted.map(([id])=>catById(id).color),borderWidth:1,borderRadius:6}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{y:{ticks:{callback:v=>'€ '+v.toLocaleString('nl-NL')},grid:{color:'rgba(128,128,128,0.1)'}},
+          x:{grid:{display:false},ticks:{autoSkip:false,maxRotation:30}}}}
+    });
+  }
+  document.getElementById('ov-list').innerHTML='';
+}
+
+function renderCats(){
+  const period_start=dateToStr(getPeriodStart(today()));
+  const period_end=dateToStr(getPeriodEnd(getPeriodStart(today())));
+  const periodTxs=transactions.filter(t=>t.date>=period_start&&t.date<=period_end&&t.type==='expense');
+
+  const expEl=document.getElementById('exp-cats-grid');
+  expEl.innerHTML=EXPENSE_CATS.map(c=>{
+    const total=periodTxs.filter(t=>t.cat===c.id).reduce((s,t)=>s+t.amount,0);
+    const limit=budgets[c.id]||null;
+    const pct=limit?Math.min(100,Math.round((total/limit)*100)):0;
+    const overPct=limit?Math.round((total/limit)*100):0;
+    const isSaving=c.id==='sparen';
+    const barColor=isSaving?c.color:!limit?c.color:overPct>=100?'#993C1D':overPct>=80?'#BA7517':c.color;
+    const barWidth=limit?Math.min(100,pct):0;
+    const budgetStr=isSaving&&limit
+      ?`<span style="font-size:11px;font-weight:500;color:var(--green)">gespaard</span>`
+      :limit
+        ?`<span style="font-size:11px;font-weight:500;color:${overPct>=100?'#993C1D':overPct>=80?'#BA7517':'var(--text2)'}">${overPct}%</span>`
+        :`<span style="font-size:11px;color:var(--text2)">geen limiet</span>`;
+    return`<div class="cat-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="cat-name" style="margin-bottom:0">${c.label}</div>
+        ${budgetStr}
+      </div>
+      <div class="cat-bar-bg"><div class="cat-bar" style="width:${limit?barWidth:0}%;background:${barColor}"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div class="cat-amount">${fmt(total)}</div>
+        ${limit?`<div style="font-size:11px;color:var(--text2)">van ${fmt(limit)}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// --- BUDGETS ---
+function renderBudgetForm(){
+  const grid=document.getElementById('budget-form-grid');
+  grid.innerHTML=EXPENSE_CATS.map(c=>`
+    <div>
+      <label style="display:flex;align-items:center;gap:5px">
+        <span style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block"></span>${c.label}
+      </label>
+      <input type="number" id="budget-input-${c.id}" placeholder="Geen limiet" min="0" step="1" value="${budgets[c.id]||''}">
+    </div>`).join('');
+}
+
+function saveBudgets(){
+  EXPENSE_CATS.forEach(c=>{
+    const val=parseFloat(document.getElementById('budget-input-'+c.id).value);
+    if(val>0)budgets[c.id]=val; else delete budgets[c.id];
+  });
+  saveAll();renderBudgets();
+}
+
+function renderBudgets(){
+  renderBudgetForm();
+  const el=document.getElementById('budget-progress');
+  const start=getPeriodStart(today()), end=getPeriodEnd(start);
+  const txs=transactions.filter(t=>t.date>=dateToStr(start)&&t.date<=dateToStr(end)&&t.type==='expense');
+  el.innerHTML=EXPENSE_CATS.map(c=>{
+    const spent=txs.filter(t=>t.cat===c.id).reduce((s,t)=>s+t.amount,0);
+    const limit=budgets[c.id]||null;
+    const isSaving=c.id==='sparen';
+    const pct=limit?Math.min(Math.round((spent/limit)*100),100):0;
+    const overPct=limit?Math.round((spent/limit)*100):0;
+    const barColor=isSaving?c.color:!limit?c.color:overPct>=100?'#993C1D':overPct>=80?'#BA7517':c.color;
+    const cardClass=isSaving?'':!limit?'':overPct>=100?' over':overPct>=80?' warn':'';
+    const statusTag=isSaving&&limit
+      ?`<span class="budget-pct" style="color:var(--green)"><i class="ti ti-thumb-up"></i> ${fmt(spent)} gespaard</span>`
+      :!limit
+        ?`<span class="no-budget">geen limiet</span>`
+        :overPct>=100
+          ?`<span class="budget-pct" style="color:#993C1D"><i class="ti ti-alert-triangle"></i> ${overPct}% — limiet overschreden</span>`
+          :overPct>=80
+            ?`<span class="budget-pct" style="color:#BA7517"><i class="ti ti-alert-circle"></i> ${overPct}% — bijna vol</span>`
+            :`<span class="budget-pct" style="color:var(--text2)">${overPct}%</span>`;
+    return`<div class="budget-card${cardClass}">
+      <div class="budget-row">
+        <span class="budget-label" style="display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${c.color};display:inline-block"></span>${c.label}
+        </span>${statusTag}
+      </div>
+      <div class="budget-bar-bg"><div class="budget-bar" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="budget-amounts">${fmt(spent)} uitgegeven${limit?' van '+fmt(limit):''}</div>
+    </div>`;
+  }).join('');
+}
+
+// --- WEALTH ---
+function getLatestSnapshot(acc){
+  if(!acc.snapshots||!acc.snapshots.length)return acc.initialbalance||0;
+  return[...acc.snapshots].sort((a,b)=>b.date.localeCompare(a.date))[0].balance;
+}
+function getPrevSnapshot(acc){
+  if(!acc.snapshots||acc.snapshots.length<2)return acc.initialbalance||0;
+  return[...acc.snapshots].sort((a,b)=>b.date.localeCompare(a.date))[1].balance;
+}
+
+function renderWealth(){
+  const list=document.getElementById('accounts-list');
+  const totalNow=accounts.reduce((s,a)=>s+getLatestSnapshot(a),0);
+  const totalPrev=accounts.reduce((s,a)=>s+getPrevSnapshot(a),0);
+  const totalChange=totalNow-totalPrev;
+  document.getElementById('wealth-total').textContent=fmt(totalNow);
+  const wc=document.getElementById('wealth-change');
+  if(accounts.length&&totalChange!==0){wc.textContent=fmtSigned(totalChange)+' t.o.v. vorige meting';wc.style.color=totalChange>=0?'var(--green)':'var(--red)';}
+  else wc.textContent='';
+  if(!accounts.length){list.innerHTML='<div class="empty">Nog geen rekeningen toegevoegd</div>';document.getElementById('wealth-chart-wrap').style.display='none';return;}
+  list.innerHTML=accounts.map(acc=>{
+    const cur=getLatestSnapshot(acc), prev=getPrevSnapshot(acc), change=cur-prev;
+    const t=ACC_TYPES[acc.type]||ACC_TYPES.savings;
+    const changeHTML=acc.snapshots&&acc.snapshots.length>1?`<div class="account-change" style="color:${change>=0?'var(--green)':'var(--red)'}">${fmtSigned(change)} t.o.v. vorige meting</div>`:'';
+    const latestDate=acc.snapshots&&acc.snapshots.length?[...acc.snapshots].sort((a,b)=>b.date.localeCompare(a.date))[0].date:null;
+    const dateStr=latestDate?new Date(latestDate).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}):'';
+    return`<div class="account-card">
+      <div class="account-header">
+        <div class="account-name"><i class="ti ${t.icon}" style="color:${t.color};font-size:20px"></i>${esc(acc.name)}<span class="account-badge" style="background:${t.color}22;color:${t.color}">${t.label}</span></div>
+        <div class="account-actions">
+          <button class="btn sm" onclick="openHistory(${acc.id})" title="Historie"><i class="ti ti-history"></i></button>
+          <button class="btn sm" onclick="openSnapshot(${acc.id})" title="Saldo bijwerken"><i class="ti ti-pencil"></i></button>
+          <button class="btn sm" onclick="openEditAccount(${acc.id})" title="Bewerken"><i class="ti ti-settings"></i></button>
+          <button class="btn sm danger" onclick="deleteAccount(${acc.id})"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div class="account-balance" style="color:${t.color}">${fmt(cur)}</div>
+      ${changeHTML}
+      ${dateStr?`<div style="font-size:12px;color:var(--text2);margin-top:4px">Laatste update: ${dateStr}</div>`:''}
+    </div>`;
+  }).join('');
+  renderWealthChart();
+}
+
+function renderWealthChart(){
+  const wrap=document.getElementById('wealth-chart-wrap');
+  const allSnaps=[];
+  accounts.forEach(acc=>{(acc.snapshots||[]).forEach(s=>{allSnaps.push({date:s.date});});});
+  const uniqueDates=[...new Set(allSnaps.map(s=>s.date))].sort();
+  if(uniqueDates.length<2){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  const datasets=accounts.map(acc=>{
+    const t=ACC_TYPES[acc.type]||ACC_TYPES.savings;
+    const snapsMap={};(acc.snapshots||[]).forEach(s=>{snapsMap[s.date]=s.balance;});
+    let last=acc.initialbalance||0;
+    const data=uniqueDates.map(d=>{if(snapsMap[d]!==undefined)last=snapsMap[d];return parseFloat(last.toFixed(2));});
+    return{label:acc.name,data,borderColor:t.color,backgroundColor:t.color+'33',fill:true,tension:0.3,pointRadius:4,pointHoverRadius:6};
+  });
+  if(wealthChart){wealthChart.destroy();wealthChart=null;}
+  wealthChart=new Chart(document.getElementById('wealth-chart'),{
+    type:'line',
+    data:{labels:uniqueDates.map(d=>new Date(d).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'2-digit'})),datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:accounts.length>1,position:'bottom',labels:{boxWidth:10,font:{size:12}}}},
+      scales:{y:{ticks:{callback:v=>'€ '+v.toLocaleString('nl-NL')},grid:{color:'rgba(128,128,128,0.1)'}},x:{grid:{display:false},ticks:{maxRotation:30}}}}
+  });
+}
+
+// --- ACCOUNT MODALS ---
+function openAddAccount(){editingAccountId=null;document.getElementById('modal-account-title').textContent='Rekening toevoegen';document.getElementById('acc-name').value='';document.getElementById('acc-type').value='savings';document.getElementById('acc-balance').value='';document.getElementById('modal-account').style.display='flex';}
+function openEditAccount(id){editingAccountId=id;const acc=accounts.find(a=>a.id===id);if(!acc)return;document.getElementById('modal-account-title').textContent='Rekening bewerken';document.getElementById('acc-name').value=acc.name;document.getElementById('acc-type').value=acc.type;document.getElementById('acc-balance').value=getLatestSnapshot(acc);document.getElementById('modal-account').style.display='flex';}
+function saveAccount(){
+  const name=document.getElementById('acc-name').value.trim(), type=document.getElementById('acc-type').value, balance=parseFloat(document.getElementById('acc-balance').value)||0;
+  if(!name){alert('Geef een naam op.');return;}
+  if(editingAccountId){const acc=accounts.find(a=>a.id===editingAccountId);if(acc){acc.name=name;acc.type=type;}}
+  else accounts.push({id:Date.now(),name,type,initialBalance:balance,snapshots:[{date:today(),balance}]});
+  closeModal('modal-account');saveAll();renderWealth();
+}
+function deleteAccount(id){if(!confirm('Rekening verwijderen?'))return;accounts=accounts.filter(a=>a.id!==id);saveAll();renderWealth();}
+function openSnapshot(id){snapshotAccountId=id;const acc=accounts.find(a=>a.id===id);if(!acc)return;document.getElementById('snapshot-account-name').textContent=acc.name;document.getElementById('snap-balance').value=getLatestSnapshot(acc);document.getElementById('snap-date').value=today();document.getElementById('modal-snapshot').style.display='flex';}
+function saveSnapshot(){
+  const balance=parseFloat(document.getElementById('snap-balance').value), date=document.getElementById('snap-date').value;
+  if(isNaN(balance)||!date){alert('Vul een saldo en datum in.');return;}
+  const acc=accounts.find(a=>a.id===snapshotAccountId);if(!acc)return;
+  if(!acc.snapshots)acc.snapshots=[];
+  const existing=acc.snapshots.find(s=>s.date===date);
+  if(existing)existing.balance=balance; else acc.snapshots.push({date,balance});
+  acc.snapshots.sort((a,b)=>a.date.localeCompare(b.date));
+  closeModal('modal-snapshot');saveAll();renderWealth();
+}
+function openHistory(id){
+  const acc=accounts.find(a=>a.id===id);if(!acc)return;
+  document.getElementById('modal-history-title').textContent='Historie: '+acc.name;
+  const snaps=[...(acc.snapshots||[])].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('modal-history-content').innerHTML=snaps.length?snaps.map((s,i)=>{
+    const prev=snaps[i+1], change=prev?s.balance-prev.balance:null;
+    const changeStr=change!==null?`<span style="color:${change>=0?'var(--green)':'var(--red)'};font-size:12px">${fmtSigned(change)}</span>`:'';
+    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border)">
+      <div><div style="font-size:14px">${new Date(s.date).toLocaleDateString('nl-NL',{day:'numeric',month:'long',year:'numeric'})}</div><div style="font-size:13px;margin-top:2px">${changeStr}</div></div>
+      <div style="font-size:15px;font-weight:500">${fmt(s.balance)}</div>
+    </div>`;
+  }).join(''):'<div class="empty">Geen historie</div>';
+  document.getElementById('modal-history').style.display='flex';
+}
+
+// --- DEBTS ---
+function renderDebts(){
+  const list=document.getElementById('debts-list');
+  const totalNow=debts.reduce((s,d)=>s+getCurrentDebt(d),0);
+  const totalPrev=debts.reduce((s,d)=>s+getPrevDebt(d),0);
+  const totalChange=totalNow-totalPrev;
+  document.getElementById('debts-total').textContent=fmt(totalNow);
+  const dc=document.getElementById('debts-change');
+  if(debts.length&&totalChange!==0){dc.textContent=fmtSigned(-totalChange)+(totalChange<0?' meer schuld':' afgelost')+' t.o.v. vorige update';dc.style.color=totalChange<=0?'var(--red)':'var(--green)';}
+  else dc.textContent='';
+  if(!debts.length){list.innerHTML='<div class="empty">Nog geen schulden geregistreerd</div>';document.getElementById('debt-chart-wrap').style.display='none';return;}
+  list.innerHTML=debts.map(debt=>{
+    const cur=getCurrentDebt(debt), initial=debt.initialAmount||cur;
+    const paidOff=initial-cur, pct=initial?Math.min(100,Math.round((paidOff/initial)*100)):0;
+    const t=DEBT_TYPES[debt.type]||DEBT_TYPES.other;
+    const latestDate=debt.history&&debt.history.length?[...debt.history].sort((a,b)=>b.date.localeCompare(a.date))[0].date:null;
+    const dateStr=latestDate?new Date(latestDate).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'numeric'}):'';
+    return`<div class="debt-card">
+      <div class="debt-header">
+        <div><div class="debt-name" style="display:flex;align-items:center;gap:8px"><i class="ti ${t.icon}" style="color:${t.color}"></i>${esc(debt.name)}<span class="account-badge" style="background:${t.color}22;color:${t.color}">${t.label}</span></div>${debt.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">${esc(debt.note)}</div>`:''}${dateStr?`<div style="font-size:12px;color:var(--text2);margin-top:2px">Laatste update: ${dateStr}</div>`:''}</div>
+        <div class="account-actions">
+          <button class="btn sm" onclick="openDebtUpdate(${debt.id})"><i class="ti ti-pencil"></i> Bijwerken</button>
+          <button class="btn sm" onclick="openEditDebt(${debt.id})"><i class="ti ti-settings"></i></button>
+          <button class="btn sm danger" onclick="deleteDebt(${debt.id})"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div class="debt-amount">${fmt(cur)}</div>
+      ${pct>0?`<div style="font-size:12px;color:var(--green);margin-top:4px">${fmt(paidOff)} afgelost (${pct}%)</div>`:''}
+      <div class="debt-bar-bg"><div class="debt-bar" style="width:${100-pct}%"></div></div>
+    </div>`;
+  }).join('');
+  renderDebtChart();
+}
+
+function getCurrentDebt(debt){
+  if(!debt.history||!debt.history.length)return debt.initialamount||0;
+  return[...debt.history].sort((a,b)=>b.date.localeCompare(a.date))[0].amount;
+}
+function getPrevDebt(debt){
+  if(!debt.history||debt.history.length<2)return debt.initialamount||0;
+  return[...debt.history].sort((a,b)=>b.date.localeCompare(a.date))[1].amount;
+}
+
+function renderDebtChart(){
+  const wrap=document.getElementById('debt-chart-wrap');
+  const allDates=[];
+  debts.forEach(d=>{(d.history||[]).forEach(h=>{allDates.push(h.date);});});
+  const uniqueDates=[...new Set(allDates)].sort();
+  if(uniqueDates.length<2){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  const datasets=debts.map(debt=>{
+    const t=DEBT_TYPES[debt.type]||DEBT_TYPES.other;
+    const histMap={};(debt.history||[]).forEach(h=>{histMap[h.date]=h.amount;});
+    let last=debt.initialamount||0;
+    const data=uniqueDates.map(d=>{if(histMap[d]!==undefined)last=histMap[d];return parseFloat(last.toFixed(2));});
+    return{label:debt.name,data,borderColor:t.color,backgroundColor:t.color+'33',fill:false,tension:0.3,pointRadius:4};
+  });
+  if(debtChart){debtChart.destroy();debtChart=null;}
+  debtChart=new Chart(document.getElementById('debt-chart'),{
+    type:'line',
+    data:{labels:uniqueDates.map(d=>new Date(d).toLocaleDateString('nl-NL',{day:'numeric',month:'short',year:'2-digit'})),datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:debts.length>1,position:'bottom',labels:{boxWidth:10,font:{size:12}}}},
+      scales:{y:{ticks:{callback:v=>'€ '+v.toLocaleString('nl-NL')},grid:{color:'rgba(128,128,128,0.1)'}},x:{grid:{display:false},ticks:{maxRotation:30}}}}
+  });
+}
+
+function openAddDebt(){editingDebtId=null;document.getElementById('modal-debt-title').textContent='Schuld toevoegen';document.getElementById('debt-name').value='';document.getElementById('debt-type').value='klarna';document.getElementById('debt-amount').value='';document.getElementById('debt-note').value='';document.getElementById('modal-debt').style.display='flex';}
+function openEditDebt(id){editingDebtId=id;const debt=debts.find(d=>d.id===id);if(!debt)return;document.getElementById('modal-debt-title').textContent='Schuld bewerken';document.getElementById('debt-name').value=debt.name;document.getElementById('debt-type').value=debt.type;document.getElementById('debt-amount').value=getCurrentDebt(debt);document.getElementById('debt-note').value=debt.note||'';document.getElementById('modal-debt').style.display='flex';}
+function saveDebt(){
+  const name=document.getElementById('debt-name').value.trim(), type=document.getElementById('debt-type').value;
+  const amount=parseFloat(document.getElementById('debt-amount').value)||0, note=document.getElementById('debt-note').value.trim();
+  if(!name){alert('Geef een naam op.');return;}
+  if(editingDebtId){const debt=debts.find(d=>d.id===editingDebtId);if(debt){debt.name=name;debt.type=type;debt.note=note;}}
+  else debts.push({id:Date.now(),name,type,note,initialAmount:amount,history:[{date:today(),amount}]});
+  closeModal('modal-debt');saveAll();renderDebts();
+}
+function deleteDebt(id){if(!confirm('Schuld verwijderen?'))return;debts=debts.filter(d=>d.id!==id);saveAll();renderDebts();}
+function openDebtUpdate(id){updatingDebtId=id;const debt=debts.find(d=>d.id===id);if(!debt)return;document.getElementById('debt-update-name').textContent=debt.name;document.getElementById('debt-update-amount').value=getCurrentDebt(debt);document.getElementById('debt-update-date').value=today();document.getElementById('modal-debt-update').style.display='flex';}
+function saveDebtUpdate(){
+  const amount=parseFloat(document.getElementById('debt-update-amount').value), date=document.getElementById('debt-update-date').value;
+  if(isNaN(amount)||!date){alert('Vul een bedrag en datum in.');return;}
+  const debt=debts.find(d=>d.id===updatingDebtId);if(!debt)return;
+  if(!debt.history)debt.history=[];
+  const existing=debt.history.find(h=>h.date===date);
+  if(existing)existing.amount=amount; else debt.history.push({date,amount});
+  debt.history.sort((a,b)=>a.date.localeCompare(b.date));
+  closeModal('modal-debt-update');saveAll();renderDebts();
+}
+
+// --- CSV ---
+function exportCSV(){
+  if(!transactions.length){alert('Geen transacties om te exporteren.');return;}
+  const header='id,type,categorie,bedrag,datum,omschrijving,locatie';
+  const rows=transactions.map(t=>`${t.id},${t.type},${t.cat},${parseFloat(t.amount).toFixed(2)},${t.date},"${(t.desc||'').replace(/"/g,'""')}","${(t.location||'').replace(/"/g,'""')}"`);
+  const csv=[header,...rows].join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='budget-export.csv';a.click();
+  URL.revokeObjectURL(url);
+}
+function importCSV(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.trim().split('\n');let imported=0;
+    const existingIds=new Set(transactions.map(t=>t.id));
+    for(let i=1;i<lines.length;i++){
+      const parts=lines[i].match(/(".*?"|[^,]+)(?=,|$)/g);
+      if(!parts||parts.length<6)continue;
+      const id=parseInt(parts[0]);if(existingIds.has(id))continue;
+      const amount=parseFloat(parts[3]);if(isNaN(amount)||!parts[4])continue;
+      transactions.push({id,type:parts[1],cat:parts[2],amount,date:parts[4],desc:parts[5].replace(/^"|"$/g,'').replace(/""/g,'"')});
+      imported++;
+    }
+    transactions.sort((a,b)=>b.id-a.id);
+    saveAll();renderRecent();populatePeriodFilter();alert(imported+' transacties geïmporteerd.');
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+function closeModal(id){document.getElementById(id).style.display='none';}
+function closeModalIfOverlay(e){if(e.target===e.currentTarget)e.currentTarget.style.display='none';}
+
+function populateComparePeriods(){
+  const periods=getAllPeriods();
+  ['compare-period-a','compare-period-b'].forEach((id,i)=>{
+    const sel=document.getElementById(id);
+    if(!sel)return;
+    const current=sel.value;
+    sel.innerHTML=periods.map((p,idx)=>{
+      const val=dateToStr(p);
+      const selected=current?val===current:idx===i&&idx<periods.length;
+      return`<option value="${val}"${selected?' selected':''}>${getPeriodLabel(p)}</option>`;
+    }).join('');
+  });
+}
+
+function renderCompare(){
+  populateComparePeriods();
+  const valA=document.getElementById('compare-period-a').value;
+  const valB=document.getElementById('compare-period-b').value;
+  const el=document.getElementById('compare-content');
+  if(!valA||!valB){el.innerHTML='';return;}
+
+  function getPeriodData(val){
+    const start=new Date(val), end=getPeriodEnd(start);
+    const s=dateToStr(start), e=dateToStr(end);
+    const txs=transactions.filter(t=>t.date>=s&&t.date<=e);
+    const income=txs.filter(t=>t.type==='income').reduce((a,t)=>a+t.amount,0);
+    const expense=txs.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
+    const byCat={};
+    EXPENSE_CATS.forEach(c=>{byCat[c.id]=txs.filter(t=>t.cat===c.id).reduce((a,t)=>a+t.amount,0);});
+    return{label:getPeriodLabel(start),income,expense,saldo:income-expense,byCat};
+  }
+
+  const A=getPeriodData(valA), B=getPeriodData(valB);
+
+  function diffBadge(a,b,lowerIsBetter=false){
+    const diff=a-b;
+    if(Math.abs(diff)<0.01)return`<span class="compare-diff neutral">gelijk</span>`;
+    const better=lowerIsBetter?diff<0:diff>0;
+    const sign=diff>0?'+':'-';
+    return`<span class="compare-diff ${better?'better':'worse'}">${sign}${fmt(Math.abs(diff))}</span>`;
+  }
+
+  const catRows=EXPENSE_CATS.map(c=>{
+    const aVal=A.byCat[c.id]||0, bVal=B.byCat[c.id]||0;
+    if(aVal===0&&bVal===0)return'';
+    return`<div class="compare-row">
+      <div class="compare-row-label"><div class="compare-dot" style="background:${c.color}"></div>${c.label}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="color:var(--text2);font-size:13px">${fmt(aVal)}</span>
+        <span style="color:var(--text2);font-size:12px">vs</span>
+        <span style="color:var(--text2);font-size:13px">${fmt(bVal)}</span>
+        ${diffBadge(aVal,bVal,true)}
+      </div>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  el.innerHTML=`
+    <div class="compare-hero">
+      <div class="compare-hero-card a">
+        <div class="compare-hero-label">Periode A</div>
+        <div class="compare-hero-value">${(A.saldo<0?'- ':'')}${fmt(A.saldo)}</div>
+        <div class="compare-hero-sub">${A.label}</div>
+      </div>
+      <div class="compare-hero-card b">
+        <div class="compare-hero-label">Periode B</div>
+        <div class="compare-hero-value">${(B.saldo<0?'- ':'')}${fmt(B.saldo)}</div>
+        <div class="compare-hero-sub">${B.label}</div>
+      </div>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card">
+        <div class="compare-card-title">💚 Inkomsten</div>
+        <div class="compare-row"><span>Periode A</span><span class="compare-val" style="color:var(--green)">${fmt(A.income)}</span></div>
+        <div class="compare-row"><span>Periode B</span><span class="compare-val" style="color:var(--green)">${fmt(B.income)}</span></div>
+        <div class="compare-row"><span>Verschil</span>${diffBadge(A.income,B.income)}</div>
+      </div>
+      <div class="compare-card">
+        <div class="compare-card-title">🛍️ Uitgaven</div>
+        <div class="compare-row"><span>Periode A</span><span class="compare-val" style="color:var(--red)">${fmt(A.expense)}</span></div>
+        <div class="compare-row"><span>Periode B</span><span class="compare-val" style="color:var(--red)">${fmt(B.expense)}</span></div>
+        <div class="compare-row"><span>Verschil</span>${diffBadge(A.expense,B.expense,true)}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label" style="margin-top:0">Uitgaven per categorie</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;gap:16px">
+        <span>Groen = A is beter &nbsp; Rood = A is slechter</span>
+      </div>
+      ${catRows||'<div class="empty" style="padding:1rem 0">Geen uitgaven gevonden in deze periodes</div>'}
+    </div>`;
+}
+
+function renderInsights(){
+  const el=document.getElementById('insights-content');
+  const insights=[];
+
+  const allPeriods=getAllPeriods();
+  const curStart=getPeriodStart(today());
+  const curEnd=getPeriodEnd(curStart);
+  const curS=dateToStr(curStart), curE=dateToStr(curEnd);
+  const curTxs=transactions.filter(t=>t.date>=curS&&t.date<=curE);
+  const curExpense=curTxs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const curIncome=curTxs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const curSaldo=curIncome-curExpense;
+
+  // Helper: get period totals
+  function getPeriodTotals(periodStart){
+    const end=getPeriodEnd(periodStart);
+    const s=dateToStr(periodStart), e=dateToStr(end);
+    const txs=transactions.filter(t=>t.date>=s&&t.date<=e);
+    const income=txs.filter(t=>t.type==='income').reduce((a,t)=>a+t.amount,0);
+    const expense=txs.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0);
+    const byCat={};
+    EXPENSE_CATS.forEach(c=>{byCat[c.id]=txs.filter(t=>t.cat===c.id).reduce((a,t)=>a+t.amount,0);});
+    return{income,expense,saldo:income-expense,byCat,txs};
+  }
+
+  const cur=getPeriodTotals(curStart);
+
+  // 1. Saldo deze periode
+  if(curIncome>0){
+    if(curSaldo>0){
+      const pct=Math.round((curSaldo/curIncome)*100);
+      insights.push({type:'positive',icon:'🎉',title:'Goed bezig deze periode!',body:`Je houdt ${fmt(curSaldo)} over (${pct}% van je inkomsten). Dat is een mooie buffer.`});
+    } else if(curSaldo<0){
+      insights.push({type:'negative',icon:'⚠️',title:'Je geeft meer uit dan je verdient',body:`Je staat ${fmt(Math.abs(curSaldo))} in het rood deze periode. Kijk of er nog posten zijn die je kunt uitstellen.`});
+    }
+  }
+
+  // 2. Budget overschrijdingen
+  const overBudget=EXPENSE_CATS.filter(c=>{
+    if(c.id==='sparen')return false;
+    const limit=budgets[c.id];
+    if(!limit)return false;
+    return(cur.byCat[c.id]||0)>limit;
+  });
+  if(overBudget.length){
+    const names=overBudget.map(c=>{
+      const pct=Math.round(((cur.byCat[c.id]||0)/budgets[c.id])*100);
+      return`${c.label} (${pct}%)`;
+    }).join(', ');
+    insights.push({type:'negative',icon:'🚨',title:`${overBudget.length} categorie${overBudget.length>1?'ën':''} boven budget`,body:`Deze periode overschrijd je het budget bij: ${names}.`});
+  }
+
+  // 3. Bijna vol
+  const nearBudget=EXPENSE_CATS.filter(c=>{
+    if(c.id==='sparen')return false;
+    const limit=budgets[c.id];
+    if(!limit)return false;
+    const pct=(cur.byCat[c.id]||0)/limit;
+    return pct>=0.8&&pct<1;
+  });
+  if(nearBudget.length){
+    const names=nearBudget.map(c=>`${c.label} (${Math.round(((cur.byCat[c.id]||0)/budgets[c.id])*100)}%)`).join(', ');
+    insights.push({type:'warning',icon:'⏰',title:'Bijna aan je limiet',body:`Let op: ${names} zit bijna vol. Nog ${getPeriodLabel(curStart).split('–')[1].trim()} te gaan.`});
+  }
+
+  // 4. Vergelijk met vorige periode
+  if(allPeriods.length>=2){
+    const prevStart=allPeriods[1];
+    const prev=getPeriodTotals(prevStart);
+    if(prev.expense>0&&cur.expense>0){
+      const diff=cur.expense-prev.expense;
+      const pct=Math.round((Math.abs(diff)/prev.expense)*100);
+      if(diff>50){
+        insights.push({type:'warning',icon:'📈',title:`Uitgaven ${pct}% hoger dan vorige periode`,body:`Je gaf ${fmt(cur.expense)} uit vs ${fmt(prev.expense)} vorige periode. Verschil: ${fmt(diff)} meer.`});
+      } else if(diff<-50){
+        insights.push({type:'positive',icon:'📉',title:`Uitgaven ${pct}% lager dan vorige periode`,body:`Goed gedaan! Je gaf ${fmt(Math.abs(diff))} minder uit dan vorige periode (${fmt(cur.expense)} vs ${fmt(prev.expense)}).`});
+      }
+    }
+    // Categorie trends
+    EXPENSE_CATS.forEach(c=>{
+      if(c.id==='sparen')return;
+      const curVal=cur.byCat[c.id]||0, prevVal=prev.byCat[c.id]||0;
+      if(prevVal<10||curVal<10)return;
+      const diff=curVal-prevVal;
+      const pct=Math.round((Math.abs(diff)/prevVal)*100);
+      if(pct>=50&&Math.abs(diff)>30){
+        if(diff>0){
+          insights.push({type:'warning',icon:'👀',title:`${c.label} flink hoger dan vorig`,body:`Je gaf ${fmt(diff)} meer uit aan ${c.label} dan vorige periode (${fmt(curVal)} vs ${fmt(prevVal)}).`});
+        }
+      }
+    });
+  }
+
+  // 5. Sparen inzicht
+  const spaargeld=cur.byCat['sparen']||0;
+  if(spaargeld>0){
+    const target=budgets['sparen']||800;
+    const pct=Math.round((spaargeld/target)*100);
+    if(pct>=100){
+      insights.push({type:'positive',icon:'💚',title:'Spaardoel gehaald!',body:`Je hebt al ${fmt(spaargeld)} gespaard deze periode, dat is ${pct}% van je doel van ${fmt(target)}.`});
+    } else {
+      insights.push({type:'neutral',icon:'🌱',title:`${pct}% van je spaardoel`,body:`Je hebt ${fmt(spaargeld)} gespaard. Nog ${fmt(target-spaargeld)} te gaan om je doel van ${fmt(target)} te halen.`});
+    }
+  } else if(Object.keys(budgets).includes('sparen')){
+    insights.push({type:'warning',icon:'🫙',title:'Nog niet gespaard deze periode',body:'Je hebt nog geen bedrag geboekt onder Sparen. Vergeet het niet!'});
+  }
+
+  // 6. Vermogen groei
+  if(accounts.length>=1){
+    const totalNow=accounts.reduce((s,a)=>s+getLatestSnapshot(a),0);
+    const totalPrev=accounts.reduce((s,a)=>s+getPrevSnapshot(a),0);
+    const change=totalNow-totalPrev;
+    if(Math.abs(change)>1){
+      insights.push({type:change>0?'positive':'negative',icon:change>0?'🏦':'📊',
+        title:change>0?`Vermogen gegroeid met ${fmt(change)}`:`Vermogen gedaald met ${fmt(Math.abs(change))}`,
+        body:change>0?`Je totale vermogen is gestegen naar ${fmt(totalNow)}.`:`Je totale vermogen is gedaald naar ${fmt(totalNow)}. Controleer of dit klopt.`});
+    }
+  }
+
+  // 7. Schulden
+  if(debts.length){
+    const totalDebt=debts.reduce((s,d)=>s+getCurrentDebt(d),0);
+    const totalPrevDebt=debts.reduce((s,d)=>s+getPrevDebt(d),0);
+    const change=totalPrevDebt-totalDebt;
+    if(change>0){
+      insights.push({type:'positive',icon:'💪',title:`${fmt(change)} afgelost`,body:`Je totale schuld is gedaald naar ${fmt(totalDebt)}. Goed bezig!`});
+    } else if(totalDebt>0){
+      insights.push({type:'neutral',icon:'📋',title:`Totale schuld: ${fmt(totalDebt)}`,body:`Je hebt nog ${debts.length} openstaande schuld${debts.length>1?'en':''}. Blijf ze bijhouden!`});
+    }
+  }
+
+  // 8. Geen transacties
+  if(!transactions.length){
+    insights.push({type:'neutral',icon:'🌿',title:'Nog geen data',body:'Voeg je eerste transacties toe om inzichten te zien.'});
+  }
+
+  if(!insights.length){
+    el.innerHTML='<div class="empty">Geen inzichten beschikbaar. Voeg meer transacties toe!</div>';
+    return;
+  }
+
+  el.innerHTML=insights.map(i=>`
+    <div class="insight-card ${i.type}">
+      <div class="insight-icon">${i.icon}</div>
+      <div>
+        <div class="insight-title">${i.title}</div>
+        <div class="insight-body">${i.body}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderDashboard(){
+  const start=getPeriodStart(today()), end=getPeriodEnd(start);
+  const startStr=dateToStr(start), endStr=dateToStr(end);
+  const txs=transactions.filter(t=>t.date>=startStr&&t.date<=endStr);
+  const income=txs.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense=txs.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const saldo=income-expense;
+
+  // Netto vermogen
+  const totalWealth=accounts.reduce((s,a)=>s+getLatestSnapshot(a),0);
+  const totalDebt=debts.reduce((s,d)=>s+getCurrentDebt(d),0);
+  const netto=totalWealth-totalDebt;
+  const prevWealth=accounts.reduce((s,a)=>s+getPrevSnapshot(a),0);
+  const wealthChange=totalWealth-prevWealth;
+
+  document.getElementById('dash-netto').textContent=fmt(netto);
+  document.getElementById('dash-netto-sub').textContent=
+    accounts.length?`${fmt(totalWealth)} vermogen · ${fmt(totalDebt)} schuld`:'Voeg je rekeningen toe bij Vermogen';
+
+  document.getElementById('dash-saldo').textContent=(saldo<0?'- ':'')+fmt(saldo);
+  document.getElementById('dash-saldo').style.color=saldo<0?'var(--red)':saldo>0?'var(--green)':'var(--text)';
+  document.getElementById('dash-saldo-sub').textContent=getPeriodLabel(start);
+
+  document.getElementById('dash-schuld').textContent=fmt(totalDebt);
+  document.getElementById('dash-schuld-sub').textContent=debts.length?debts.length+' schuld'+(debts.length>1?'en':''):'Geen schulden geregistreerd';
+  document.getElementById('dash-income').textContent=fmt(income);
+  document.getElementById('dash-expense').textContent=fmt(expense);
+
+  // Budget voortgang
+  const budgetEl=document.getElementById('dash-budgets');
+  const budgetCats=EXPENSE_CATS.filter(c=>budgets[c.id]&&c.id!=='sparen');
+  if(!budgetCats.length){budgetEl.innerHTML='<div class="empty" style="padding:1rem 0">Stel budgetten in via het Budgetten tabblad</div>';
+  }else{
+    budgetEl.innerHTML=budgetCats.map(c=>{
+      const spent=txs.filter(t=>t.cat===c.id).reduce((s,t)=>s+t.amount,0);
+      const limit=budgets[c.id], pct=Math.min(100,Math.round((spent/limit)*100));
+      const over=Math.round((spent/limit)*100);
+      const barColor=over>=100?'var(--red)':over>=80?'var(--amber)':c.color;
+      const pctColor=over>=100?'var(--red)':over>=80?'var(--amber)':'var(--text2)';
+      return`<div class="dash-budget-item">
+        <div class="dash-budget-dot" style="background:${c.color}"></div>
+        <div class="dash-budget-name">${c.label}</div>
+        <div class="dash-budget-bar-wrap"><div class="dash-budget-bar" style="width:${pct}%;background:${barColor}"></div></div>
+        <div class="dash-budget-pct" style="color:${pctColor}">${over}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Spaarpotjes & vermogen
+  const potsEl=document.getElementById('dash-pots');
+  const potAccounts=accounts.filter(a=>a.type==='pot');
+  const otherAccounts=accounts.filter(a=>a.type!=='pot');
+  const items=[...potAccounts,...otherAccounts].slice(0,6);
+  if(!items.length){potsEl.innerHTML='<div class="empty" style="padding:1rem 0;grid-column:span 2">Voeg rekeningen toe bij Vermogen</div>';
+  }else{
+    const t_map={savings:'🏦',investments:'📈',crypto:'🪙',cash:'💵',pot:'🫙'};
+    potsEl.innerHTML=items.map(acc=>{
+      const bal=getLatestSnapshot(acc);
+      const t=ACC_TYPES[acc.type]||ACC_TYPES.savings;
+      return`<div class="dash-pot">
+        <div class="dash-pot-name">${t_map[acc.type]||'💰'} ${esc(acc.name)}</div>
+        <div class="dash-pot-value" style="color:${t.color}">${fmt(bal)}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  const tabs=['dashboard','add','overview','cats','budgets','wealth','debts','compare','insights','settings'];
+  document.querySelectorAll('.tab')[tabs.indexOf(name)].classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='dashboard')renderDashboard();
+  if(name==='overview')renderOverview();
+  if(name==='cats')renderCats();
+  if(name==='wealth')renderWealth();
+  if(name==='budgets')renderBudgets();
+  if(name==='debts')renderDebts();
+  if(name==='compare'){populateComparePeriods();renderCompare();}
+  if(name==='insights')renderInsights();
+}
+
+document.getElementById('date').value=today();
+toggleCats();
+initAuth();
+</script>
+</body>
+</html>
